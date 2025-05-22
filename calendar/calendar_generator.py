@@ -64,8 +64,10 @@ def scrape_events():
 
 
 def extract_reg_link(x, i, url_prefix=""):
-    if (link_container := safe_index(x, i)) is not None and not link_container.string.isspace():
-        _reg_link = link_container.select_one('a')['href']
+    link_container = safe_index(x, i)
+    _link = link_container.select_one('a') if not link_container.string.isspace() else None
+    if _link is not None:
+        _reg_link = _link['href']
     else:
         _reg_link = 'TBD'
 
