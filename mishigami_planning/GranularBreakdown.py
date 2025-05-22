@@ -89,12 +89,6 @@ def print_granular_breakdown(splits: list[list[Split]],
 
 
 def main():
-    initial_moving_speed = 17.0
-    min_moving_speed = 15
-    decay_per_split_mph = 0.2
-    downtime_ratio = 5.0 / 100
-    start_date = datetime(year=2025, month=6, day=19, hour=6, minute=0)
-
     print('GRANULAR')
     segment_one = [
         Split(
@@ -269,16 +263,24 @@ def main():
         ),
     ]
 
-    with_sub_splits = False
+    initial_moving_speed = 17.0
+    min_moving_speed = 15
+    decay_per_split_mph = 0.2
+    downtime_ratio = 5.0 / 100
+    start_date = datetime(year=2025, month=6, day=19, hour=6, minute=0)
+    split_adjustment_times = [timedelta(hours=8)]
+    sub_split_distances = 66.1
+    last_split_zero_downtime = True
+    with_sub_splits = True
     print_granular_breakdown(splits=[segment_one, segment_two],
-                             split_adjustment_times=[timedelta(hours=9)],
+                             split_adjustment_times=split_adjustment_times,
                              initial_moving_speed=initial_moving_speed,
                              min_moving_speed=min_moving_speed,
                              decay_per_split=decay_per_split_mph,
                              downtime_ratio=downtime_ratio,
                              start_time=start_date,
-                             sub_split_distances=62.14,
-                             last_split_zero_downtime=True,
+                             sub_split_distances=sub_split_distances,
+                             last_split_zero_downtime=last_split_zero_downtime,
                              with_sub_splits=with_sub_splits)
 
 
