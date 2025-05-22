@@ -4,7 +4,10 @@ from mishigami_planning.PaceCalculator import PaceCalculator
 from mishigami_planning.Split import Split, RestStop
 from mishigami_planning.Utils import format_field, hours_to_pretty
 
+from Utils import hours_to_pretty as hrs_prty
+
 import logging
+
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -80,18 +83,18 @@ class PaceCalculatorPrinter:
             "value_formatting": '%m/%d %I:%M:%S %p',
             "width": 17
         },
-        'end_time': {
-            "name": "End Time",
-            "header_formatting": ">17s",
-            "value_formatting": '%m/%d %I:%M:%S %p',
-            "width": 17
-        },
         'total_time': {
             "name": "Total Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
             "transformer": hours_to_pretty,
             "width": 19
+        },
+        'end_time': {
+            "name": "End Time",
+            "header_formatting": ">17s",
+            "value_formatting": '%m/%d %I:%M:%S %p',
+            "width": 17
         },
     }
     LOCATION_HEADERS = {
@@ -113,6 +116,12 @@ class PaceCalculatorPrinter:
             "value_formatting": '>40s',
             "width": 40
         },
+        # 'rest_stop_url': {
+        #     "name": "Link",
+        #     "header_formatting": ">40s",
+        #     "value_formatting": '>40s',
+        #     "width": 40
+        # },
     }
     SPACER = ' | '
 
@@ -154,13 +163,26 @@ class PaceCalculatorPrinter:
         self.__print_footer(summary,
                             field_keys_showing)
 
-        print(f"{'Moving/Elapsed':14}: "
-              f"{(summary['moving_time'] / summary['total_time'] if summary['total_time'] != 0 else 0):0.2%}")
-        print(f"{'Down/Moving':14}: {summary['down_time'] / summary['moving_time']:7.3%}")
-        print(f"{'Adj. Time':14}: {summary['adjustment_time']} hours")
-        print(f"{'Down Time':14}: {summary['down_time'].total_seconds() / 3600:7.3f} hours")
-        print(f"{'Moving Time':14}: {summary['moving_time'].total_seconds() / 3600:7.3f} hours")
-        print(f"{'Elapsed Time':14}: {summary['total_time'].total_seconds() / 3600:7.3f} hours")
+        print(f"{'Total Distance':14}: {summary['distance']:>8.3f}")
+        print(f"{'Time Span':14}: {summary['start_time']:%m/%d %I:%M %p} - {summary['end_time']:%m/%d %I:%M %p}")
+        print(f"{'Moving Time':14}: {hrs_prty(summary['moving_time']).strip():14} "
+              f"[{summary['moving_time'].total_seconds() / 3600:7.3f} hours]")
+        print(f"{'Down Time':14}: {hrs_prty(summary['down_time']).strip():14} "
+              f"[{summary['down_time'].total_seconds() / 3600:7.3f} hours]")
+        print(f"{'Adj. Time':14}: {hrs_prty(summary['adjustment_time']).strip():14} "
+              f"[{summary['adjustment_time'].total_seconds() / 3600:7.3f} hours]")
+        # print(f"{'Moving + Down':14}: {hrs_prty(summary['moving_time'] + summary['down_time']).strip():14} "
+        #       f"[{(summary['moving_time'] + summary['down_time']).total_seconds() / 3600:7.3f} hours]")
+        print(f"{'Elapsed Time':14}: {hrs_prty(summary['total_time']).strip():14} "
+              f"[{summary['total_time'].total_seconds() / 3600:7.3f} hours]")
+        print(f"{'Pace':14}: {summary['distance'] / (summary['total_time'].total_seconds() / 3600):>8.3f}")
+        print(
+            f"{'Distance/Day':14}: {summary['distance'] / (summary['total_time'].total_seconds() / (3600 * 24)):>8.3f}")
+        print(f"{'Moving/Elapsed':14}: {(summary['moving_time'] / summary['total_time']):>8.3%}")
+        print(f"{'Down/Elapsed':14}: {summary['down_time'] / summary['total_time']:>8.3%}")
+        print(f"{'Adj./Elapsed':14}: {summary['adjustment_time'] / summary['total_time']:>8.3%}")
+        print(f"{'Down/Moving':14}: {summary['down_time'] / summary['moving_time']:>8.3%}")
+        print(f"{'Adj./Moving':14}: {summary['adjustment_time'] / summary['moving_time']:>8.3%}")
 
     def __exposed_fields(self, include_stop_info):
         if self.keys_to_rename is None:
@@ -182,9 +204,10 @@ class PaceCalculatorPrinter:
                             formatting=f"{_v['header_formatting']}")
                for _k, _v in self.FIELD_PROPS.items() if _k in field_keys_showing]
 
-        res_2 = [format_field(val=_v['name'] if _k not in self.keys_to_rename else self.keys_to_rename[_k][:_v['width']],
-                              formatting=f"{_v['header_formatting']}")
-                 for _k, _v in self.LOCATION_HEADERS.items() if _k in field_keys_showing]
+        res_2 = [
+            format_field(val=_v['name'] if _k not in self.keys_to_rename else self.keys_to_rename[_k][:_v['width']],
+                         formatting=f"{_v['header_formatting']}")
+            for _k, _v in self.LOCATION_HEADERS.items() if _k in field_keys_showing]
         print(self.SPACER.join(res + res_2))
 
     def __print_detail(self,

@@ -15,21 +15,21 @@ def compute_sub_splits(total_distance: float,
 
     res = []
     for sub_split_distance in sub_split_distances:
-        sub_split_time = sub_split_distance / moving_speed
+        sub_split_moving_time = sub_split_distance / moving_speed
         res.append({
             "distance": sub_split_distance,
             "span": f"{start_offset:>7.2f}, {(start_offset := start_offset + sub_split_distance):>7.2f}",
             "moving_speed": moving_speed,
             "adjustment_time": 0,
-            "moving_time": sub_split_time,
-            "split_time": sub_split_time * (1 + down_time_ratio),
+            "moving_time": sub_split_moving_time,
+            "split_time": sub_split_moving_time * (1 + down_time_ratio),
             "split_speed": moving_speed,
-            "down_time": sub_split_time * down_time_ratio,
-            "total_time": sub_split_time * (1 + down_time_ratio),
+            "down_time": sub_split_moving_time * down_time_ratio,
+            "total_time": sub_split_moving_time * (1 + down_time_ratio),
             "pace": moving_speed,
             "start_time": start_time,
-            "adjustment_start": start_time + timedelta(hours=0),
-            "end_time": (start_time := (start_time + timedelta(hours=sub_split_time * (1 + down_time_ratio)))),
+            "adjustment_start": start_time + timedelta(hours=sub_split_moving_time),
+            "end_time": (start_time := (start_time + timedelta(hours=sub_split_moving_time * (1 + down_time_ratio)))),
             "stop": None
         })
 
@@ -130,9 +130,9 @@ class PaceCalculator:
                 "total_time": _split_time + _adjustment_time,
                 "pace": segment.distance / ((_split_time + _adjustment_time).total_seconds() / 3600),
                 "start_time": start_time,
-                "adjustment_start": start_time + _split_time,
+                "adjustment_start": start_time + moving_time,
+                "stop": segment.rest_stop,
                 "end_time": (start_time := start_time + _split_time + _adjustment_time),
-                "stop": segment.rest_stop
             }
 
             if self.stops and i <= len(self.stops):
