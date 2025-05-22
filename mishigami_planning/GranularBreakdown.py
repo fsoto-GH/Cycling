@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 from PaceCalculator import PaceCalculator
 from mishigami_planning.PaceCalculatorPrinter import PaceCalculatorPrinter
-from mishigami_planning.Split import Split, RestStop
-from mishigami_planning.Utils import hours_to_pretty as hrs_prty, days_hours_minutes
+from mishigami_planning.RestStop import RestStop
+from mishigami_planning.Split import Split
+from mishigami_planning.Utils import hours_to_pretty as hrs_prty
 
 
 def print_granular_breakdown(splits: list[list[Split]],
@@ -104,7 +105,8 @@ def main():
                     2: ' 6:00a -  9:00p',
                     3: ' 6:00a -  9:00p',
                     4: ' 6:00a -  9:00p',
-                }
+                },
+                alt='https://maps.app.goo.gl/HtB1C8vYKT6NPGwC8',
             )
         ),
         Split(
@@ -121,27 +123,30 @@ def main():
                     2: '24hr',
                     3: '24hr',
                     4: '24hr',
-                }
+                },
+                alt='https://maps.app.goo.gl/ZqLUEoFBVNCbqRjTA'
             )
         ),
         Split(
             distance=147.8,
+            sub_split_count=3,
             rest_stop=RestStop(
                 name="bp",
                 address="W365 US-2 #41, Harris, MI 49845",
                 hours={
-                    5: ' 6:00a -  1:00a',
-                    6: ' 6:00a -  1:00a',
-                    0: ' 6:00a -  1:00a',
-                    1: ' 6:00a -  1:00a',
-                    2: ' 6:00a -  1:00a',
-                    3: ' 6:00a -  1:00a',
-                    4: ' 6:00a -  1:00a',
-                }
+                    5: ' 6:00a - 10:00a',
+                    6: ' 6:00a - 10:00a',
+                    0: ' 6:00a - 10:00a',
+                    1: ' 6:00a - 10:00a',
+                    2: ' 6:00a - 10:00a',
+                    3: ' 6:00a - 10:00a',
+                    4: ' 6:00a - 10:00a',
+                },
+                alt='https://maps.app.goo.gl/XGN1H1cksLxMYKQq7'
             ),
         ),
         Split(
-            distance=86.40,
+            distance=86.40-6.8,
             adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="bp",
@@ -154,11 +159,12 @@ def main():
                     2: ' 5:00a -  9:00p',
                     3: ' 5:00a -  9:00p',
                     4: ' 5:00a -  9:00p',
-                }
+                },
+                alt='https://maps.app.goo.gl/aPGmeEHsRerT7zc9A'
             ),
         ),
         Split(
-            distance=90.8,
+            distance=90.8+6.8,
             rest_stop=RestStop(
                 name="Best Western Harbour Pointe Lakefront",
                 address='797 N State St, St Ignace, MI 49781',
@@ -170,7 +176,7 @@ def main():
                     2: ' 3:00p - 11:00a',
                     3: ' 3:00p - 11:00a',
                     4: ' 3:00p - 11:00a',
-                }
+                },
             ),
             # down_time=timedelta(minutes=36, seconds=9, microseconds=9, milliseconds=420)
         )
@@ -178,6 +184,7 @@ def main():
     segment_two = [
         Split(
             distance=125.3,
+            sub_split_count=2,
             rest_stop=RestStop(
                 name="Mobil",
                 address="100 1st St, Elk Rapids, MI 49629",
@@ -189,7 +196,8 @@ def main():
                     2: ' 5:00a - 11:00p',
                     3: ' 5:00a - 11:00p',
                     4: ' 5:00a - 11:00p',
-                }
+                },
+                alt='https://maps.app.goo.gl/RFrHK3DAkJN866Bo9'
             ),
         ),
         Split(
@@ -205,16 +213,19 @@ def main():
                     2: '24hr',
                     3: '24hr',
                     4: '24hr',
-                }
+                },
+                alt='https://maps.app.goo.gl/rwm6D7XMNBFK1scx8'
             ),
         ),
         Split
         (
             distance=130.9,
             adjustment_time=timedelta(minutes=30),
+            sub_split_count=2,
             rest_stop=RestStop(
-                name="McDonald's",
-                address="213 N River Ave, Holland, MI 49424",
+                name="CVS",
+                # name="McDonald's",
+                address="132 Douglas Ave, Holland, MI 49424",
                 hours={
                     5: '24hr',
                     6: '24hr',
@@ -224,6 +235,7 @@ def main():
                     3: '24hr',
                     4: '24hr',
                 },
+                alt='https://maps.app.goo.gl/hK7nrRVG1G2doeeu7'
             ),
         ),
         Split
@@ -241,6 +253,7 @@ def main():
                     3: ' 7:00a -  9:00p',
                     4: ' 7:00a -  9:00p',
                 },
+                alt='https://maps.app.goo.gl/qdtBCxyiEBENdZam8'
             ),
         ),
         Split
@@ -269,7 +282,7 @@ def main():
     downtime_ratio = 5.0 / 100
     start_date = datetime(year=2025, month=6, day=19, hour=6, minute=0)
     split_adjustment_times = [timedelta(hours=8)]
-    sub_split_distances = 66.1
+    sub_split_distances = 62.14
     last_split_zero_downtime = True
     with_sub_splits = True
     print_granular_breakdown(splits=[segment_one, segment_two],

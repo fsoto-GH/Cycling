@@ -116,14 +116,14 @@ class PaceCalculatorPrinter:
             "value_formatting": '>40s',
             "width": 40
         },
-        # 'rest_stop_url': {
-        #     "name": "Link",
-        #     "header_formatting": ">40s",
-        #     "value_formatting": '>40s',
-        #     "width": 40
-        # },
+        'rest_stop_alt': {
+            "name": "Alternate URL",
+            "header_formatting": "<50s",
+            "value_formatting": '<50s',
+            "width": 50
+        },
     }
-    SPACER = ' | '
+    SPACER = ' │ '
 
     def __init__(self,
                  pace_calculator: PaceCalculator,
@@ -147,19 +147,19 @@ class PaceCalculatorPrinter:
         dash_count = self.__compute_dash_count(field_keys_showing, include_stops)
 
         self.__print_header(field_keys_showing)
-        print('-' * dash_count)
+        print('─' * dash_count)
 
         for split_detail_line in splits:
-            self.__print_detail(split_detail_line,
-                                field_keys_showing)
-
-            if 'sub_splits' in split_detail_line and with_sub_splits:
-                print('*' * dash_count)
+            show_sub_splits = 'sub_splits' in split_detail_line and with_sub_splits
+            if show_sub_splits:
                 for sub_split in split_detail_line['sub_splits']:
                     self.__print_detail(sub_split, field_keys_showing, is_sub_split=True)
-                print('*' * dash_count)
+            print(('▄' if show_sub_splits else '¨') * dash_count)
+            self.__print_detail(split_detail_line,
+                                field_keys_showing)
+            print(('▀' if show_sub_splits else '¨') * dash_count)
 
-        print('-' * dash_count)
+        print('─' * dash_count)
         self.__print_footer(summary,
                             field_keys_showing)
 
@@ -235,7 +235,7 @@ class PaceCalculatorPrinter:
                 # known issue: rest_stop_* can coincide; like, 'hours' for 'rest_stop_hours' | 'rest_stop_laundry_hours'
                 stop: RestStop = split['stop']
                 if stop and (_k := key.split('_')[-1]) in stop.__dict__:
-                    _v = stop.__getattribute__(_k)
+                    _v = stop.__getattribute__(_k) or ''
 
                     if _k == 'hours':
                         d: datetime = split['end_time']

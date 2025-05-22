@@ -1,12 +1,7 @@
 from dataclasses import dataclass
 from datetime import timedelta
 
-
-@dataclass
-class RestStop:
-    name: str
-    hours: dict[int: str]
-    address: str
+from mishigami_planning.RestStop import RestStop
 
 
 @dataclass
@@ -19,6 +14,3 @@ class Split:
     moving_speed: float | None = None
     down_time: timedelta | None = None
     adjustment_time: timedelta | None = None
-
-
-

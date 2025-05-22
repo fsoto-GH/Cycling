@@ -111,6 +111,11 @@ class PaceCalculator:
             if segment.moving_speed is not None:
                 _moving_speed = segment.moving_speed
 
+            sub_split_distances = self.sub_split_distances
+
+            if segment.sub_split_count:
+                sub_split_distances = segment.distance / segment.sub_split_count
+
             _res = {
                 "distance": segment.distance,
                 "sub_splits": compute_sub_splits(
@@ -119,7 +124,7 @@ class PaceCalculator:
                     moving_speed=_moving_speed,
                     start_time=start_time,
                     start_offset=_start_offset,
-                    sub_split_distances=self.sub_split_distances),
+                    sub_split_distances=sub_split_distances),
                 "span": f"{_start_offset:>7.2f}, {(_start_offset := _start_offset + segment.distance):>7.2f}",
                 "moving_speed": _moving_speed,
                 "adjustment_time": _adjustment_time,
