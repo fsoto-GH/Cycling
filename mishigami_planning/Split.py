@@ -16,7 +16,7 @@ class Split:
     # fields below override base calculations
     moving_speed: float | None = None
     down_time: timedelta | None = None
-    sleep_time: timedelta | None = None
+    adjustment_time: timedelta | None = None
 
 
 

@@ -4,6 +4,9 @@ from mishigami_planning.PaceCalculator import PaceCalculator
 from mishigami_planning.Split import Split, RestStop
 from mishigami_planning.Utils import format_field, hours_to_pretty
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 
 class PaceCalculatorPrinter:
     FIELD_PROPS = {
@@ -39,32 +42,11 @@ class PaceCalculatorPrinter:
             "transformer": hours_to_pretty,
             "width": 19
         },
-        'split_time': {
-            "name": "Split Time",
-            "header_formatting": ">19s",
-            "value_formatting": '19s',
-            "transformer": hours_to_pretty,
-            "width": 19
-        },
         'split_speed': {
             "name": "Split Speed",
             "header_formatting": ">11s",
             "value_formatting": '11.2f',
             "width": 11
-        },
-        'sleep_time': {
-            "name": "Sleep Time",
-            "header_formatting": ">19s",
-            "value_formatting": '19s',
-            "transformer": hours_to_pretty,
-            "width": 19
-        },
-        'total_time': {
-            "name": "Total Time",
-            "header_formatting": ">19s",
-            "value_formatting": '19s',
-            "transformer": hours_to_pretty,
-            "width": 19
         },
         'pace': {
             "name": "Pace",
@@ -78,8 +60,22 @@ class PaceCalculatorPrinter:
             "value_formatting": '%m/%d %I:%M:%S %p',
             "width": 17
         },
-        'sleep_start': {
-            "name": "Sleep Start",
+        'split_time': {
+            "name": "Split Time",
+            "header_formatting": ">19s",
+            "value_formatting": '19s',
+            "transformer": hours_to_pretty,
+            "width": 19
+        },
+        'adjustment_time': {
+            "name": "Adjustment Time",
+            "header_formatting": ">19s",
+            "value_formatting": '19s',
+            "transformer": hours_to_pretty,
+            "width": 19
+        },
+        'adjustment_start': {
+            "name": "Adjustment Start",
             "header_formatting": ">17s",
             "value_formatting": '%m/%d %I:%M:%S %p',
             "width": 17
@@ -89,6 +85,13 @@ class PaceCalculatorPrinter:
             "header_formatting": ">17s",
             "value_formatting": '%m/%d %I:%M:%S %p',
             "width": 17
+        },
+        'total_time': {
+            "name": "Total Time",
+            "header_formatting": ">19s",
+            "value_formatting": '19s',
+            "transformer": hours_to_pretty,
+            "width": 19
         },
     }
     LOCATION_HEADERS = {
@@ -154,7 +157,7 @@ class PaceCalculatorPrinter:
         print(f"{'Moving/Elapsed':14}: "
               f"{(summary['moving_time'] / summary['total_time'] if summary['total_time'] != 0 else 0):0.2%}")
         print(f"{'Down/Moving':14}: {summary['down_time'] / summary['moving_time']:7.3%}")
-        print(f"{'Sleep Time':14}: {summary['sleep_time']} hours")
+        print(f"{'Adj. Time':14}: {summary['adjustment_time']} hours")
         print(f"{'Down Time':14}: {summary['down_time'].total_seconds() / 3600:7.3f} hours")
         print(f"{'Moving Time':14}: {summary['moving_time'].total_seconds() / 3600:7.3f} hours")
         print(f"{'Elapsed Time':14}: {summary['total_time'].total_seconds() / 3600:7.3f} hours")
@@ -190,7 +193,9 @@ class PaceCalculatorPrinter:
                        is_sub_split: bool = False):
         res = []
         for key in self.FIELD_PROPS:
-            if key in field_keys_showing:
+            if key not in split:
+                logging.error(f"The key: '{key}' does not exist in split detail.")
+            if key in field_keys_showing and key in split:
                 _v = split[key]
                 if 'transformer' in self.FIELD_PROPS[key]:
                     _v = self.FIELD_PROPS[key]['transformer'](split[key])
@@ -225,7 +230,10 @@ class PaceCalculatorPrinter:
     def __print_footer(self, summary: dict[str: [str | float | datetime]], keys_to_include: set[str]):
         res = []
         for key in self.FIELD_PROPS:
-            if key in keys_to_include:
+            if key not in summary:
+                logging.error(f"The key: '{key}' does not exist in split summary.")
+
+            if key in keys_to_include and key in summary:
                 val = summary[key]
                 is_filler = type(val) == str and set(val) == {'-'}
                 if 'transformer' in self.FIELD_PROPS[key] and not is_filler:
@@ -253,7 +261,7 @@ def main():
     decay_per_split_mph = 0.2
     downtime_ratio = 0.05
 
-    distances = [Split(distance=571.5, sleep_time=timedelta(hours=9)), Split(distance=549.7)]
+    distances = [Split(distance=571.5, adjustment_time=timedelta(hours=9)), Split(distance=549.7)]
 
     start_date = datetime(year=2025, month=7, day=12, hour=6, minute=0)
 

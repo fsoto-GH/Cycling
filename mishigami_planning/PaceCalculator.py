@@ -20,7 +20,7 @@ def compute_sub_splits(total_distance: float,
             "distance": sub_split_distance,
             "span": f"{start_offset:>7.2f}, {(start_offset := start_offset + sub_split_distance):>7.2f}",
             "moving_speed": moving_speed,
-            "sleep_time": 0,
+            "adjustment_time": 0,
             "moving_time": sub_split_time,
             "split_time": sub_split_time * (1 + down_time_ratio),
             "split_speed": moving_speed,
@@ -28,7 +28,7 @@ def compute_sub_splits(total_distance: float,
             "total_time": sub_split_time * (1 + down_time_ratio),
             "pace": moving_speed,
             "start_time": start_time,
-            "sleep_start": start_time + timedelta(hours=0),
+            "adjustment_start": start_time + timedelta(hours=0),
             "end_time": (start_time := (start_time + timedelta(hours=sub_split_time * (1 + down_time_ratio)))),
             "stop": None
         })
@@ -103,9 +103,9 @@ class PaceCalculator:
             if segment.down_time is not None:
                 _split_time = moving_time + segment.down_time
 
-            _sleep_time = timedelta(hours=0)
-            if segment.sleep_time is not None:
-                _sleep_time = segment.sleep_time
+            _adjustment_time = timedelta(hours=0)
+            if segment.adjustment_time is not None:
+                _adjustment_time = segment.adjustment_time
 
             _moving_speed = moving_speed
             if segment.moving_speed is not None:
@@ -122,16 +122,16 @@ class PaceCalculator:
                     sub_split_distances=self.sub_split_distances),
                 "span": f"{_start_offset:>7.2f}, {(_start_offset := _start_offset + segment.distance):>7.2f}",
                 "moving_speed": _moving_speed,
-                "sleep_time": _sleep_time,
+                "adjustment_time": _adjustment_time,
                 "moving_time": moving_time,
                 "split_time": _split_time,
                 "split_speed": segment.distance / (_split_time.total_seconds() / 3600),
                 "down_time":  moving_time * _down_time_ratio if segment.down_time is None else segment.down_time,
-                "total_time": _split_time + _sleep_time,
-                "pace": segment.distance / ((_split_time + _sleep_time).total_seconds() / 3600),
+                "total_time": _split_time + _adjustment_time,
+                "pace": segment.distance / ((_split_time + _adjustment_time).total_seconds() / 3600),
                 "start_time": start_time,
-                "sleep_start": start_time + _split_time,
-                "end_time": (start_time := start_time + _split_time + _sleep_time),
+                "adjustment_start": start_time + _split_time,
+                "end_time": (start_time := start_time + _split_time + _adjustment_time),
                 "stop": segment.rest_stop
             }
 
@@ -185,7 +185,7 @@ class PaceCalculator:
         total_moving_time: timedelta = timedelta(hours=0)
         total_down_time: timedelta = timedelta(hours=0)
         total_split_time: timedelta = timedelta(hours=0)
-        total_sleep_time: timedelta = timedelta(hours=0)
+        total_adjustment_time: timedelta = timedelta(hours=0)
         total_time: timedelta = timedelta(hours=0)
         total_pace: float = 0
         start_time: datetime = self.start_time or datetime.today()
@@ -196,7 +196,7 @@ class PaceCalculator:
             total_down_time += split['down_time']
             total_moving_time += split['moving_time']
             total_split_time += split['split_time']
-            total_sleep_time += split['sleep_time']
+            total_adjustment_time += split['adjustment_time']
             total_time += split['total_time']
             total_pace += split['pace']
             end_time += split['total_time']
@@ -209,11 +209,11 @@ class PaceCalculator:
             "down_time": total_down_time,
             "split_time": total_split_time,
             "split_speed": total_distance / (total_split_time.total_seconds() / 3600),
-            "sleep_time": total_sleep_time,
+            "adjustment_time": total_adjustment_time,
             "total_time": total_time,
             "pace": total_distance / (total_time.total_seconds() / 3600),
             "start_time": start_time,
-            "sleep_start": None,
+            "adjustment_start": None,
             "end_time": end_time
         }
 

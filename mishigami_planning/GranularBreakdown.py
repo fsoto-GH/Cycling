@@ -20,11 +20,11 @@ def print_granular_breakdown(splits: list[list[Split]],
     elapsed_time = timedelta()
     down_time = timedelta()
     moving_time = timedelta()
-    sleep_time = timedelta()
+    adjustment_time = timedelta()
     total_distance = sum((sum(segment.distance for segment in split) for split in splits) if splits else 0)
 
     pace_calculator = PaceCalculator()
-    printer = PaceCalculatorPrinter(pace_calculator, keys_to_exclude={'sleep_start'})
+    printer = PaceCalculatorPrinter(pace_calculator)
 
     for i, split in enumerate(splits):
         pace_calculator.set_split_info(
@@ -45,7 +45,7 @@ def print_granular_breakdown(splits: list[list[Split]],
         elapsed_time += res['total_time']
         down_time += res['down_time']
         moving_time += res['moving_time']
-        sleep_time += res['sleep_time']
+        adjustment_time += res['adjustment_time']
 
         _start_time = res["end_time"]
         curr_speed = max(splits[-1]['moving_speed'] - decay_per_split, min_moving_speed)
@@ -57,9 +57,9 @@ def print_granular_breakdown(splits: list[list[Split]],
     print(f"{'Time Span':14}: {start_time:%m/%d %I:%M %p} - {_start_time:%m/%d %I:%M %p}")
     print(f"{'Moving Time':14}: {hrs_prty(moving_time).strip():14} [{moving_time.total_seconds() / 3600:7.3f} hours]")
     print(f"{'Down Time':14}: {hrs_prty(down_time).strip():14} [{down_time.total_seconds() / 3600:7.3f} hours]")
-    print(f"{'Sleep Time':14}: {hrs_prty(sleep_time).strip():14} [{sleep_time.total_seconds() / 3600:7.3f} hours]")
-    print(f"{'Moving + Down':14}: {hrs_prty((_start_time - start_time - sleep_time).total_seconds() / 3600).strip()} "
-          f"[{(_start_time - start_time - sleep_time).total_seconds() / 3600:7.3f} hours]")
+    print(f"{'Adj. Time':14}: {hrs_prty(adjustment_time).strip():14} [{adjustment_time.total_seconds() / 3600:7.3f} hours]")
+    print(f"{'Moving + Down':14}: {hrs_prty((_start_time - start_time - adjustment_time).total_seconds() / 3600).strip()} "
+          f"[{(_start_time - start_time - adjustment_time).total_seconds() / 3600:7.3f} hours]")
     print(f"{'Elapsed':14}: {hrs_prty((_start_time - start_time).total_seconds() / 3600).strip()} "
           f"[{(_start_time - start_time).total_seconds() / 3600:7.3f} hours]")
     print(f"{'Pace':14}: {total_distance / (elapsed_time.total_seconds() / 3600):.3f}")
@@ -68,11 +68,11 @@ def print_granular_breakdown(splits: list[list[Split]],
     print()
     print(f"{'Moving/Elapsed':14}: {moving_time / elapsed_time:8.3%}")
     print(f"{'Down/Elapsed':14}: {down_time / elapsed_time:8.3%}")
-    print(f"{'Sleep/Elapsed':14}: {sleep_time / elapsed_time:8.3%}")
+    print(f"{'Adj./Elapsed':14}: {adjustment_time / elapsed_time:8.3%}")
 
     print()
     print(f"{'Down/Moving':14}: {down_time / moving_time:8.3%}")
-    print(f"{'Sleep/Moving':14}: {sleep_time / moving_time:8.3%}")
+    print(f"{'Adjustment/Moving':14}: {adjustment_time / moving_time:8.3%}")
 
 
 def main():
@@ -118,7 +118,7 @@ def main():
         ),
         Split(
             distance=147.8,
-            sleep_time=timedelta(minutes=30),
+            adjustment_time=timedelta(minutes=30),
             rest_stop=RestStop(
                 name="bp",
                 address="W365 US-2 #41, Harris, MI 49845",
@@ -164,7 +164,7 @@ def main():
                     4: ' 3:00p - 11:00a',
                 }
             ),
-            sleep_time=timedelta(hours=9),
+            adjustment_time=timedelta(hours=9),
             # down_time=timedelta(minutes=36, seconds=9, microseconds=9, milliseconds=420)
         )
     ]
@@ -204,7 +204,7 @@ def main():
         Split
         (
             distance=130.9,
-            sleep_time=timedelta(minutes=30),
+            adjustment_time=timedelta(minutes=30),
             rest_stop=RestStop(
                 name="McDonald's",
                 address="213 N River Ave, Holland, MI 49424",
