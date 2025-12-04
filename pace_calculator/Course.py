@@ -35,6 +35,7 @@ class Course:
         # totals
         total_moving_time: timedelta = timedelta(hours=0)
         total_down_time: timedelta = timedelta(hours=0)
+        total_adjustment_time: timedelta = timedelta(hours=0)
         total_sleep_time: timedelta = timedelta(hours=0)
 
         for segment in self.segments:
@@ -44,6 +45,7 @@ class Course:
                 curr_moving_speed = segment.moving_speed
 
             split_details: list[SplitDetail] = []
+            segment_start: datetime = curr_start_time
             for i, split in enumerate(segment.splits):
                 # check if split has moving speed defined,
                 # as it overrides the decayed/computed moving speed AND segment moving speed
@@ -107,11 +109,27 @@ class Course:
                 curr_start_time += total_time
 
                 split_details.append(split_detail)
-            segment_details.append(SegmentDetail(split_details=split_details))
+
+            total_segment_elapsed_time = curr_start_time - segment_start
+            total_segment_moving_time = sum((x.moving_time for x in split_details), timedelta(0))
+            total_segment_down_time = sum((x.down_time for x in split_details), timedelta(0))
+            total_segment_adjustment_time = sum((x.adjustment_time for x in split_details), timedelta(0))
+
+            segment_details.append(SegmentDetail(
+                split_details=split_details,
+                start_time=segment_start,
+                end_time=curr_start_time,
+                total_elapsed_time=total_segment_elapsed_time,
+                total_down_time=total_segment_down_time,
+                total_moving_time=total_segment_moving_time,
+                total_adjustment_time=total_segment_adjustment_time,
+                total_sleep_time=segment.sleep_time,
+            ))
 
             # account for sleep time between segments
-            total_moving_time += sum((x.moving_time for x in split_details), timedelta(0))
-            total_down_time += sum((x.down_time for x in split_details), timedelta(0))
+            total_moving_time += total_segment_elapsed_time
+            total_down_time += total_segment_down_time
+            total_adjustment_time += total_segment_adjustment_time
             total_sleep_time += segment.sleep_time
 
             curr_start_time += segment.sleep_time
@@ -123,5 +141,6 @@ class Course:
             total_elapsed_time=curr_start_time - self.start_time,
             total_moving_time=total_moving_time,
             total_down_time=total_down_time,
-            total_sleep_time=total_sleep_time
+            total_sleep_time=total_sleep_time,
+            total_adjustment_time=total_adjustment_time
         )
