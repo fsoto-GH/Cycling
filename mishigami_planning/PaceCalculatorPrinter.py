@@ -1,10 +1,8 @@
 from datetime import datetime, timedelta
 
-from mishigami_planning.PaceCalculator import PaceCalculator
-from mishigami_planning.Split import Split, RestStop
-from mishigami_planning.Utils import format_field, hours_to_pretty
-
-from Utils import hours_to_pretty as hrs_prty
+from Split import Split, RestStop
+from SubDistancePaceCalculator import SubDistancePaceCalculator
+from Utils import format_field, hours_to_pretty as hrs_prty
 
 import logging
 
@@ -35,14 +33,14 @@ class PaceCalculatorPrinter:
             "name": "Moving Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
-            "transformer": hours_to_pretty,
+            "transformer": hrs_prty,
             "width": 19
         },
         'down_time': {
             "name": "Down Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
-            "transformer": hours_to_pretty,
+            "transformer": hrs_prty,
             "width": 19
         },
         'split_speed': {
@@ -67,14 +65,14 @@ class PaceCalculatorPrinter:
             "name": "Split Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
-            "transformer": hours_to_pretty,
+            "transformer": hrs_prty,
             "width": 19
         },
         'adjustment_time': {
             "name": "Adjustment Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
-            "transformer": hours_to_pretty,
+            "transformer": hrs_prty,
             "width": 19
         },
         'adjustment_start': {
@@ -87,7 +85,7 @@ class PaceCalculatorPrinter:
             "name": "Total Time",
             "header_formatting": ">19s",
             "value_formatting": '19s',
-            "transformer": hours_to_pretty,
+            "transformer": hrs_prty,
             "width": 19
         },
         'end_time': {
@@ -126,7 +124,7 @@ class PaceCalculatorPrinter:
     SPACER = ' │ '
 
     def __init__(self,
-                 pace_calculator: PaceCalculator,
+                 pace_calculator: SubDistancePaceCalculator | SubDistancePaceCalculator,
                  keys_to_exclude: set[str] = None,
                  keys_to_rename: dict[str: str] = None):
         """
@@ -141,7 +139,7 @@ class PaceCalculatorPrinter:
 
     def print(self, with_sub_splits: bool = False):
         splits, summary = self.pace_calculator.get_split_breakdown()
-        include_stops = any('stop' in split_detail for split_detail in splits)
+        include_stops = any(split_detail.get('stop', None) is not None for split_detail in splits)
         field_keys_showing = self.__exposed_fields(include_stops)
 
         dash_count = self.__compute_dash_count(field_keys_showing, include_stops)
@@ -288,7 +286,7 @@ def main():
 
     start_date = datetime(year=2025, month=7, day=12, hour=6, minute=0)
 
-    pace_calculator = PaceCalculator()
+    pace_calculator = SubDistancePaceCalculator()
     pace_calculator.set_split_info(
         splits=distances,
         start_moving_speed=initial_mph,

@@ -1,5 +1,5 @@
 import os
-from bs4 import PageElement, Tag
+from bs4 import PageElement, Tag, NavigableString
 from ics import Calendar, Event
 from datetime import datetime
 import requests
@@ -45,27 +45,58 @@ def scrape_events():
         for e in events:
             _elements = e.select_one('#sections > section .content > div > div > div:nth-child(n+3) > div > div > div')
             x: list[Tag | PageElement] = [e for e in _elements.children]
-            _date_el: Tag = safe_index(x, 1)
-            _dist, _loc, _name = extract_dist_loc(x, 2)
-            _reg_link = extract_reg_link(x, 3, domain)
 
-            _date = datetime.strptime(_date_el.text.strip(), '%B %d, %Y')
-            _e_name = f"{_name}" if (_dist_str := regex_dist(_dist)) is None else f"{_dist_str.lower()}: {_name}"
+            try:
+                _date_el: Tag = safe_index(x, 1)
+                _name, _dist = extract_name_dist(x, 2)
+                _loc = extract_loc(x, 3)
+                _reg_link = extract_reg_link(x, 4, domain)
 
-            res.append({
-                'location': _loc,
-                'date': _date,
-                'name': _e_name,
-                'description': f"{_dist}\n{_loc}\n{'URL: '}{url}\n{'LINK: '}{_reg_link}",
-                'uid': f"{uuid.uuid5(uuid.NAMESPACE_DNS, f'{_name}|{_date}')}"
-            })
+                _date = date_extractor(_date_el.text)
+                _e_name = f"{_name}" if (_dist_str := regex_dist(_dist)) is None else f"{_dist_str.lower()}: {_name}"
+
+                res.append({
+                    'location': _loc,
+                    'date': _date,
+                    'name': _e_name,
+                    'description': f"{_dist}\n{_loc}\n{'URL: '}{url}\n{'LINK: '}{_reg_link}",
+                    'uid': f"{uuid.uuid5(uuid.NAMESPACE_DNS, f'{_name}|{_date}')}"
+                })
+            except ValueError as e:
+                print(f'Unable to parse the following: {x}.\n'
+                      f'This was not added, so it will require manual addition. See error for more\n'
+                      f'"{e}"')
 
     return res
 
 
-def extract_reg_link(x, i, url_prefix=""):
-    link_container = safe_index(x, i)
-    _link = link_container.select_one('a') if not link_container.string.isspace() else None
+def date_extractor(s):
+    # date_string_patterns
+    # Sep 15, 2024
+    # Sept 15, 25
+    # September 15, 2024
+    patterns = ['%b %d, %Y', '%b %d, %y', '%B %d, %Y', '%B %d, %y']
+
+    # replace = Sept with Sep
+    s = s.upper().replace('SEPT', 'Sep')
+    for pattern in patterns:
+        try:
+            return datetime.strptime(s, pattern)
+        except ValueError as _:
+            continue
+
+
+def extract_reg_link(x: list[Tag], i, url_prefix=""):
+    for el in [e for e in x if e is not None and not e.text.isspace()]:
+        # continue only if NavigableString is not null or whitespace
+        candidate = el.select_one('a')
+        if candidate is not None:
+            link_container = el
+            print(candidate)
+            break
+
+    link_exists = link_container and link_container.string and not link_container.string.isspace()
+    _link = link_container.select_one('a') if link_exists else None
     if _link is not None:
         _reg_link = _link['href']
     else:
@@ -77,18 +108,21 @@ def extract_reg_link(x, i, url_prefix=""):
     return _reg_link
 
 
-def extract_dist_loc(x, i):
+def extract_name_dist(x, i):
     _dist_loc_el = safe_index(x, i)
 
     if (_name := get_text(_dist_loc_el, 'strong')) is not None:
-        _dist = _dist_loc_el.contents[-3].text
-        _loc = _dist_loc_el.contents[-1].text
+        _dist = _dist_loc_el.contents[1].text
     else:
-        _dist = _dist_loc_el.contents[0].text
-        _loc = 'TBD'
         _name = 'TBD'
+        _dist = 'TBD'
 
-    return _dist.strip(), _loc.strip(), _name.strip()
+    return _name.strip(), _dist.strip()
+
+
+def extract_loc(x, i):
+    _loc_el = safe_index(x, i)
+    return _loc_el.text
 
 
 def safe_index(x, i):

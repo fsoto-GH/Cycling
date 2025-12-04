@@ -1,74 +1,41 @@
-from mishigami_planning.PaceCalculator import PaceCalculator
+from Cycling.mishigami_planning.SubDistancePaceCalculator import SubDistancePaceCalculator
+from Cycling.mishigami_planning.Utils import splits_from_distances
 from datetime import datetime
 
-from mishigami_planning.PaceCalculatorPrinter import PaceCalculatorPrinter
-from mishigami_planning.Split import Split, RestStop
-
-
-def splits_from_distances(markers: list[float]):
-    if len(markers) == 1:
-        return markers
-    res = []
-    markers_w_zero = [0.0] + markers
-    for i in range(len(markers_w_zero) - 1):
-        res.append(markers_w_zero[i + 1] - markers_w_zero[i])
-    return res
+from PaceCalculatorPrinter import PaceCalculatorPrinter
+from Split import Split
 
 
 def main():
-    distance = 103
-    split_count = 2
-    markers = [107.7, 206.3]
+    distance = 379.6
+    split_count = 5
+    miles_to_start: float = 0
+
+    markers = [miles_to_start + x for x in [42.5, 78.6, 124.6]]
+
+    if miles_to_start != 0:
+        markers = [miles_to_start] + markers
+
     split_distances = splits_from_distances(markers)
 
     # if splits are not defined, generate based on distance and split
     if split_distances is None or len(split_distances) == 0:
         split_distances = [distance / split_count] * split_count
 
-    start_moving_speed = 18.0
+    start_moving_speed = 17.5
     min_moving_speed = 15
-    decay_per_split = 0.2
-    sleep_times: list[float] = [0 for _ in range(len(split_distances))]
-
-    # special sleep time designated to eat
-    # sleep_times[0] = -5 / 60
-    # sleep_times[1] = -5 / 60
-    # sleep_times[2] = 5 / 60
-    downtime_ratio = 0.1
-
+    decay_per_split = 0.05
+    downtime_ratio = 0.05
+    sub_split_distances = 10
+    with_sub_splits = False
     start_offset = 0
 
-    start_time = datetime(year=2025, month=5, day=17, hour=5, minute=00)
+    start_time = datetime(year=2025, month=10, day=3, hour=8, minute=0)
     no_end_downtime = True
 
-    splits = [
-        Split(
-            distance=split_distances[0],
-            rest_stop=RestStop(
-                name="Exxon",
-                address="710 E Cass St, Joliet, IL 60432",
-                hours={k: '24hrs' for k in range(7)},
-            )
-        ),
-        Split(
-            distance=split_distances[1],
-            rest_stop=RestStop(
-                name="Speedway",
-                address="752 Indian Bdy Rd, Chesterton, IN 46304",
-                hours={k: '24hrs' for k in range(7)},
-            )
-        ),
-        # Split(
-        #     distance=split_distances[2],
-        #     rest_stop=RestStop(
-        #         name="La Taquiza Highland Park",
-        #         address="71960 1st St, Highland Park, IL 60035",
-        #         hours={k: '10a - 8p' for k in range(7)},
-        #     )
-        # )
-    ]
+    splits = [Split(distance=split_distance) for split_distance in split_distances]
 
-    pace_calc = PaceCalculator()
+    pace_calc = SubDistancePaceCalculator()
 
     # pace detail is good if you intend to sleep after a split
     pace_calc.set_split_info(splits=splits,
@@ -78,11 +45,12 @@ def main():
                              start_offset=start_offset,
                              start_moving_speed=start_moving_speed,
                              min_moving_speed=min_moving_speed,
-                             decay_per_split=decay_per_split)
+                             decay_per_split=decay_per_split,
+                             sub_split_distances=sub_split_distances)
 
     pace_calculator_printer = PaceCalculatorPrinter(pace_calc,
                                                     keys_to_exclude={'sleep_start', 'pace'})
-    pace_calculator_printer.print(with_sub_splits=True)
+    pace_calculator_printer.print(with_sub_splits=with_sub_splits)
 
 
 if __name__ == '__main__':

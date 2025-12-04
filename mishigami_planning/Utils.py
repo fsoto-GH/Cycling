@@ -1,5 +1,5 @@
 import math
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 
 def should_show_field(field_key: str, keys_to_exclude: set[str]):
@@ -20,6 +20,16 @@ def split_into_chunks(x, n):
     full_chunks = int(x // n)
     remainder = x % n
     return [n] * full_chunks + ([remainder] if remainder else [])
+
+
+def splits_from_distances(markers: list[float]):
+    if len(markers) == 1:
+        return markers
+    res = []
+    markers_w_zero = [0.0] + markers
+    for i in range(len(markers_w_zero) - 1):
+        res.append(markers_w_zero[i + 1] - markers_w_zero[i])
+    return res
 
 
 def compute_distances(distance: float, split_count: int) -> list[float]:
@@ -71,3 +81,34 @@ def days_hours_minutes(td: timedelta):
 
 def round_nearest_5(x: float):
     return int(5 * round(x / 5))
+
+
+def compute_sub_distance_splits(total_distance: float,
+                                down_time_ratio: float,
+                                moving_speed: float,
+                                start_time: datetime,
+                                start_offset: float,
+                                sub_split_distances: float = 20):
+    sub_split_distances = split_into_chunks(total_distance, sub_split_distances)
+
+    res = []
+    for sub_split_distance in sub_split_distances:
+        sub_split_moving_time = sub_split_distance / moving_speed
+        res.append({
+            "distance": sub_split_distance,
+            "span": f"{start_offset:>7.2f}, {(start_offset := start_offset + sub_split_distance):>7.2f}",
+            "moving_speed": moving_speed,
+            "adjustment_time": 0,
+            "moving_time": sub_split_moving_time,
+            "split_time": sub_split_moving_time * (1 + down_time_ratio),
+            "split_speed": moving_speed,
+            "down_time": sub_split_moving_time * down_time_ratio,
+            "total_time": sub_split_moving_time * (1 + down_time_ratio),
+            "pace": sub_split_distance / (sub_split_moving_time * (1 + down_time_ratio)),
+            "start_time": start_time,
+            "adjustment_start": start_time + timedelta(hours=sub_split_moving_time),
+            "end_time": (start_time := (start_time + timedelta(hours=sub_split_moving_time * (1 + down_time_ratio)))),
+            "stop": None
+        })
+
+    return res

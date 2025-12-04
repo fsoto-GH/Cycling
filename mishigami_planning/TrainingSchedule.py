@@ -47,8 +47,8 @@ class TrainingWeek:
 
 
 def main():
-    mishigami_start = date(year=2025, month=7, day=12)
-    season_start = date(year=2025, month=3, day=22)
+    mishigami_start = date(year=2026, month=7, day=12)
+    season_start = date(year=2026, month=3, day=22)
     res = weeks_to(mishigami_start)
 
     schedule = compute_schedule(

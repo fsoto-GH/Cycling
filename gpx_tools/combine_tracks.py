@@ -7,8 +7,8 @@ def main():
     gpxs = [read_gpx(file) for file in files]
 
     for gpx in gpxs[1:]:
-        for point in gpx.tracks[0].segments[0].points:
-            gpxs[0].tracks[0].segments[0].points.append(point)
+        for point in gpx.tracks[0].segments[0].speed:
+            gpxs[0].tracks[0].segments[0].speed.append(point)
 
     save_gpx('combined_track.gpx', gpxs[0])
 

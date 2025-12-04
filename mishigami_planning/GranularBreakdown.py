@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
-from PaceCalculator import PaceCalculator
-from mishigami_planning.PaceCalculatorPrinter import PaceCalculatorPrinter
-from mishigami_planning.RestStop import RestStop
-from mishigami_planning.Split import Split
-from mishigami_planning.Utils import hours_to_pretty as hrs_prty
+from .PaceCalculatorPrinter import PaceCalculatorPrinter
+from .RestStop import RestStop
+from .Split import Split
+from .SubDistancePaceCalculator import SubDistancePaceCalculator
+from .Utils import hours_to_pretty as hrs_prty
+
+(MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY) = range(7)
 
 
 def print_granular_breakdown(splits: list[list[Split]],
@@ -13,7 +15,7 @@ def print_granular_breakdown(splits: list[list[Split]],
                              downtime_ratio: float,
                              start_time: datetime,
                              split_adjustment_times: list[timedelta],
-                             sub_split_distances: float = 20,
+                             sub_split_distances: list[float] = 20,
                              with_sub_splits: bool = False,
                              last_split_zero_downtime: bool = True):
     curr_speed = initial_moving_speed
@@ -27,9 +29,9 @@ def print_granular_breakdown(splits: list[list[Split]],
 
     total_distance = sum((sum(segment.distance for segment in split) for split in splits) if splits else 0)
 
-    pace_calculator = PaceCalculator()
+    pace_calculator = SubDistancePaceCalculator()
     pace_calculator_printer = PaceCalculatorPrinter(pace_calculator,
-                                                    keys_to_exclude={'pace', 'split_speed'},
+                                                    keys_to_exclude={'split_speed'},
                                                     keys_to_rename={'adjustment_start': 'Rest Stop Arrival'})
 
     for i, split in enumerate(splits):
@@ -42,7 +44,7 @@ def print_granular_breakdown(splits: list[list[Split]],
             min_moving_speed=min_moving_speed,
             no_end_downtime=last_split_zero_downtime,
             start_offset=start_mile,
-            sub_split_distances=sub_split_distances
+            sub_split_distances=sub_split_distances[i],
         )
 
         segments, res = pace_calculator.get_split_breakdown()
@@ -93,18 +95,19 @@ def main():
     print('GRANULAR')
     segment_one = [
         Split(
-            distance=114.3,
+            distance=77.0,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="McDonald's",
                 address="7170 N Teutonia Ave, Milwaukee, WI 53209",
                 hours={
-                    5: ' 6:00a -  9:00p',
-                    6: ' 6:00a -  9:00p',
-                    0: ' 6:00a -  9:00p',
-                    1: ' 6:00a -  9:00p',
-                    2: ' 6:00a -  9:00p',
-                    3: ' 6:00a -  9:00p',
-                    4: ' 6:00a -  9:00p',
+                    SATURDAY: ' 6:00a -  9:00p',
+                    SUNDAY: ' 6:00a -  9:00p',
+                    MONDAY: ' 6:00a -  9:00p',
+                    TUESDAY: ' 6:00a -  9:00p',
+                    WEDNESDAY: ' 6:00a -  9:00p',
+                    THURSDAY: ' 6:00a -  9:00p',
+                    FRIDAY: ' 6:00a -  9:00p',
                 },
                 alt='https://maps.app.goo.gl/HtB1C8vYKT6NPGwC8',
             )
@@ -116,31 +119,31 @@ def main():
                 name="Shell",
                 address="1010 S Broadway, De Pere, WI 54115",
                 hours={
-                    5: '24hr',
-                    6: '24hr',
-                    0: '24hr',
-                    1: '24hr',
-                    2: '24hr',
-                    3: '24hr',
-                    4: '24hr',
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
                 },
                 alt='https://maps.app.goo.gl/ZqLUEoFBVNCbqRjTA'
             )
         ),
         Split(
             distance=147.8,
-            sub_split_count=3,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="bp",
                 address="W365 US-2 #41, Harris, MI 49845",
                 hours={
-                    5: ' 6:00a - 10:00a',
-                    6: ' 6:00a - 10:00a',
-                    0: ' 6:00a - 10:00a',
-                    1: ' 6:00a - 10:00a',
-                    2: ' 6:00a - 10:00a',
-                    3: ' 6:00a - 10:00a',
-                    4: ' 6:00a - 10:00a',
+                    SATURDAY: ' 6:00a - 10:00a',
+                    SUNDAY: ' 6:00a - 10:00a',
+                    MONDAY: ' 6:00a - 10:00a',
+                    TUESDAY: ' 6:00a - 10:00a',
+                    WEDNESDAY: ' 6:00a - 10:00a',
+                    THURSDAY: ' 6:00a - 10:00a',
+                    FRIDAY: ' 6:00a - 10:00a',
                 },
                 alt='https://maps.app.goo.gl/XGN1H1cksLxMYKQq7'
             ),
@@ -152,67 +155,68 @@ def main():
                 name="bp",
                 address="1223 US-2, Gulliver, MI 49840",
                 hours={
-                    5: ' 7:00a -  9:00p',
-                    6: ' 7:00a -  9:00p',
-                    0: ' 5:00a -  9:00p',
-                    1: ' 5:00a -  9:00p',
-                    2: ' 5:00a -  9:00p',
-                    3: ' 5:00a -  9:00p',
-                    4: ' 5:00a -  9:00p',
+                    SATURDAY: ' 7:00a -  9:00p',
+                    SUNDAY: ' 7:00a -  9:00p',
+                    MONDAY: ' 5:00a -  9:00p',
+                    TUESDAY: ' 5:00a -  9:00p',
+                    WEDNESDAY: ' 5:00a -  9:00p',
+                    THURSDAY: ' 5:00a -  9:00p',
+                    FRIDAY: ' 5:00a -  9:00p',
                 },
                 alt='https://maps.app.goo.gl/aPGmeEHsRerT7zc9A'
             ),
         ),
         Split(
-            distance=90.8+6.8,
+            distance=90.8+6.8+5.9,
+            moving_speed=16,
             rest_stop=RestStop(
                 name="Best Western Harbour Pointe Lakefront",
                 address='797 N State St, St Ignace, MI 49781',
                 hours={
-                    5: ' 3:00p - 11:00a',
-                    6: ' 3:00p - 11:00a',
-                    0: ' 3:00p - 11:00a',
-                    1: ' 3:00p - 11:00a',
-                    2: ' 3:00p - 11:00a',
-                    3: ' 3:00p - 11:00a',
-                    4: ' 3:00p - 11:00a',
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
                 },
             ),
-            # down_time=timedelta(minutes=36, seconds=9, microseconds=9, milliseconds=420)
         )
     ]
     segment_two = [
         Split(
             distance=125.3,
-            sub_split_count=2,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="Mobil",
                 address="100 1st St, Elk Rapids, MI 49629",
                 hours={
-                    5: ' 5:00a - 11:00p',
-                    6: ' 6:00a - 10:00p',
-                    0: ' 5:00a - 11:00p',
-                    1: ' 5:00a - 11:00p',
-                    2: ' 5:00a - 11:00p',
-                    3: ' 5:00a - 11:00p',
-                    4: ' 5:00a - 11:00p',
+                    SATURDAY: ' 5:00a - 11:00p',
+                    SUNDAY: ' 6:00a - 10:00p',
+                    MONDAY: ' 5:00a - 11:00p',
+                    TUESDAY: ' 5:00a - 11:00p',
+                    WEDNESDAY: ' 5:00a - 11:00p',
+                    THURSDAY: ' 5:00a - 11:00p',
+                    FRIDAY: ' 5:00a - 11:00p',
                 },
                 alt='https://maps.app.goo.gl/RFrHK3DAkJN866Bo9'
             ),
         ),
         Split(
             distance=108.5,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="Wesco (Gas Station)",
                 address="75 Cypress St, Manistee, MI 49660",
                 hours={
-                    5: '24hr',
-                    6: '24hr',
-                    0: '24hr',
-                    1: '24hr',
-                    2: '24hr',
-                    3: '24hr',
-                    4: '24hr',
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
                 },
                 alt='https://maps.app.goo.gl/rwm6D7XMNBFK1scx8'
             ),
@@ -220,20 +224,19 @@ def main():
         Split
         (
             distance=130.9,
-            adjustment_time=timedelta(minutes=30),
-            sub_split_count=2,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="CVS",
                 # name="McDonald's",
                 address="132 Douglas Ave, Holland, MI 49424",
                 hours={
-                    5: '24hr',
-                    6: '24hr',
-                    0: '24hr',
-                    1: '24hr',
-                    2: '24hr',
-                    3: '24hr',
-                    4: '24hr',
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
                 },
                 alt='https://maps.app.goo.gl/hK7nrRVG1G2doeeu7'
             ),
@@ -241,48 +244,326 @@ def main():
         Split
         (
             distance=100,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name="Barney's",
                 address="10 N Thompson St, New Buffalo, MI 49117",
                 hours={
-                    5: ' 7:00a -  9:00p',
-                    6: ' 7:00a -  9:00p',
-                    0: ' 7:00a -  9:00p',
-                    1: ' 7:00a -  9:00p',
-                    2: ' 7:00a -  9:00p',
-                    3: ' 7:00a -  9:00p',
-                    4: ' 7:00a -  9:00p',
+                    SATURDAY: ' 7:00a -  9:00p',
+                    SUNDAY: ' 7:00a -  9:00p',
+                    MONDAY: ' 7:00a -  9:00p',
+                    TUESDAY: ' 7:00a -  9:00p',
+                    WEDNESDAY: ' 7:00a -  9:00p',
+                    THURSDAY: ' 7:00a -  9:00p',
+                    FRIDAY: ' 7:00a -  9:00p',
                 },
                 alt='https://maps.app.goo.gl/qdtBCxyiEBENdZam8'
             ),
         ),
         Split
         (
-            distance=85,
+            distance=70.5,
+            adjustment_time=timedelta(minutes=15),
             rest_stop=RestStop(
                 name='Specialized Fulton',
                 address='925 W Lake St, Chicago, IL 60607',
                 hours={
-                    5: '10:00a -  5:00p',
-                    6: '11:00a -  4:00p',
-                    0: '11:00a -  6:00p',
-                    1: '11:00a -  6:00p',
-                    2: '11:00a -  6:00p',
-                    3: '11:00a -  6:00p',
-                    4: '11:00a -  6:00p',
+                    SATURDAY: '10:00a -  5:00p',
+                    SUNDAY: '11:00a -  4:00p',
+                    MONDAY: '11:00a -  6:00p',
+                    TUESDAY: '11:00a -  6:00p',
+                    WEDNESDAY: '11:00a -  6:00p',
+                    THURSDAY: '11:00a -  6:00p',
+                    FRIDAY: '11:00a -  6:00p',
                 }
             ),
-            # down_time=timedelta(minutes=37, seconds=59, microseconds=0, milliseconds=650)
         ),
     ]
 
-    initial_moving_speed = 17.0
+    initial_moving_speed = 16.8
     min_moving_speed = 15
     decay_per_split_mph = 0.2
     downtime_ratio = 5.0 / 100
-    start_date = datetime(year=2025, month=6, day=19, hour=6, minute=0)
-    split_adjustment_times = [timedelta(hours=8)]
-    sub_split_distances = 62.14
+    start_date = datetime(year=2025, month=7, day=12, hour=6, minute=0)
+    split_adjustment_times = [timedelta(hours=4)]
+    sub_split_distances = [16, 15.0477]
+    last_split_zero_downtime = True
+    with_sub_splits = True
+    print_granular_breakdown(splits=[segment_one, segment_two],
+                             split_adjustment_times=split_adjustment_times,
+                             initial_moving_speed=initial_moving_speed,
+                             min_moving_speed=min_moving_speed,
+                             decay_per_split=decay_per_split_mph,
+                             downtime_ratio=downtime_ratio,
+                             start_time=start_date,
+                             sub_split_distances=sub_split_distances,
+                             last_split_zero_downtime=last_split_zero_downtime,
+                             with_sub_splits=with_sub_splits)
+
+
+def main2():
+    print('GRANULAR')
+    segment_one = [
+        Split(
+            distance=77.0,
+            rest_stop=RestStop(
+                name="McDonald's",
+                address="7170 N Teutonia Ave, Milwaukee, WI 53209",
+                hours={
+                    SATURDAY: ' 6:00a -  9:00p',
+                    SUNDAY: ' 6:00a -  9:00p',
+                    MONDAY: ' 6:00a -  9:00p',
+                    TUESDAY: ' 6:00a -  9:00p',
+                    WEDNESDAY: ' 6:00a -  9:00p',
+                    THURSDAY: ' 6:00a -  9:00p',
+                    FRIDAY: ' 6:00a -  9:00p',
+                },
+                alt='https://maps.app.goo.gl/HtB1C8vYKT6NPGwC8',
+            )
+        ),
+        Split(
+            distance=89.7,
+            adjustment_time=timedelta(minutes=15),
+            rest_stop=RestStop(
+                name="Shell",
+                address="1010 S Broadway, De Pere, WI 54115",
+                hours={
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
+                },
+                alt='https://maps.app.goo.gl/ZqLUEoFBVNCbqRjTA'
+            )
+        ),
+        Split(
+            distance=79.5,
+            rest_stop=RestStop(
+                name="bp",
+                address="W365 US-2 #41, Harris, MI 49845",
+                hours={
+                    SATURDAY: ' 6:00a - 10:00a',
+                    SUNDAY: ' 6:00a - 10:00a',
+                    MONDAY: ' 6:00a - 10:00a',
+                    TUESDAY: ' 6:00a - 10:00a',
+                    WEDNESDAY: ' 6:00a - 10:00a',
+                    THURSDAY: ' 6:00a - 10:00a',
+                    FRIDAY: ' 6:00a - 10:00a',
+                },
+                alt='https://maps.app.goo.gl/XGN1H1cksLxMYKQq7'
+            ),
+        ),
+        Split(
+            distance=58.9,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="bp",
+                address="1223 US-2, Gulliver, MI 49840",
+                hours={
+                    SATURDAY: ' 7:00a -  9:00p',
+                    SUNDAY: ' 7:00a -  9:00p',
+                    MONDAY: ' 5:00a -  9:00p',
+                    TUESDAY: ' 5:00a -  9:00p',
+                    WEDNESDAY: ' 5:00a -  9:00p',
+                    THURSDAY: ' 5:00a -  9:00p',
+                    FRIDAY: ' 5:00a -  9:00p',
+                },
+                alt='https://maps.app.goo.gl/aPGmeEHsRerT7zc9A'
+            ),
+        ),
+        Split(
+            distance=90.5,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Best Western Harbour Pointe Lakefront",
+                address='797 N State St, St Ignace, MI 49781',
+                hours={
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
+                },
+            ),
+        ),
+        Split(
+            distance=69.1,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Best Western Harbour Pointe Lakefront",
+                address='797 N State St, St Ignace, MI 49781',
+                hours={
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
+                },
+            ),
+        ),
+        Split(
+            distance=109.6,
+            moving_speed=16.7,
+            rest_stop=RestStop(
+                name="Best Western Harbour Pointe Lakefront",
+                address='797 N State St, St Ignace, MI 49781',
+                hours={
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
+                },
+            ),
+        )
+    ]
+
+    segment_two = [
+
+        Split(
+            distance=3 + 5 + 72.4,  # transition, shuttle, rest stop
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Mobil",
+                address="100 1st St, Elk Rapids, MI 49629",
+                hours={
+                    SATURDAY: ' 5:00a - 11:00p',
+                    SUNDAY: ' 6:00a - 10:00p',
+                    MONDAY: ' 5:00a - 11:00p',
+                    TUESDAY: ' 5:00a - 11:00p',
+                    WEDNESDAY: ' 5:00a - 11:00p',
+                    THURSDAY: ' 5:00a - 11:00p',
+                    FRIDAY: ' 5:00a - 11:00p',
+                },
+                alt='https://maps.app.goo.gl/RFrHK3DAkJN866Bo9'
+            ),
+        ),
+        Split(
+            distance=89.6,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Wesco (Gas Station)",
+                address="75 Cypress St, Manistee, MI 49660",
+                hours={
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
+                },
+                alt='https://maps.app.goo.gl/rwm6D7XMNBFK1scx8'
+            ),
+        ),
+        Split
+        (
+            distance=83.8,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="CVS",
+                # name="McDonald's",
+                address="132 Douglas Ave, Holland, MI 49424",
+                hours={
+                    SATURDAY: '24hr',
+                    SUNDAY: '24hr',
+                    MONDAY: '24hr',
+                    TUESDAY: '24hr',
+                    WEDNESDAY: '24hr',
+                    THURSDAY: '24hr',
+                    FRIDAY: '24hr',
+                },
+                alt='https://maps.app.goo.gl/hK7nrRVG1G2doeeu7'
+            ),
+        ),
+        Split
+        (
+            distance=83.3,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Barney's",
+                address="10 N Thompson St, New Buffalo, MI 49117",
+                hours={
+                    SATURDAY: ' 7:00a -  9:00p',
+                    SUNDAY: ' 7:00a -  9:00p',
+                    MONDAY: ' 7:00a -  9:00p',
+                    TUESDAY: ' 7:00a -  9:00p',
+                    WEDNESDAY: ' 7:00a -  9:00p',
+                    THURSDAY: ' 7:00a -  9:00p',
+                    FRIDAY: ' 7:00a -  9:00p',
+                },
+                alt='https://maps.app.goo.gl/qdtBCxyiEBENdZam8'
+            ),
+        ),
+        Split
+        (
+            distance=86.4,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name='Specialized Fulton',
+                address='925 W Lake St, Chicago, IL 60607',
+                hours={
+                    SATURDAY: '10:00a -  5:00p',
+                    SUNDAY: '11:00a -  4:00p',
+                    MONDAY: '11:00a -  6:00p',
+                    TUESDAY: '11:00a -  6:00p',
+                    WEDNESDAY: '11:00a -  6:00p',
+                    THURSDAY: '11:00a -  6:00p',
+                    FRIDAY: '11:00a -  6:00p',
+                }
+            ),
+        ),
+        Split(
+            distance=69.2,
+            adjustment_time=timedelta(minutes=10),
+            rest_stop=RestStop(
+                name="Best Western Harbour Pointe Lakefront",
+                address='797 N State St, St Ignace, MI 49781',
+                hours={
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
+                },
+            ),
+        ),
+        Split(
+            distance=44.8,
+            rest_stop=RestStop(
+                name="Best Western Harbour Pointe Lakefront",
+                address='797 N State St, St Ignace, MI 49781',
+                hours={
+                    SATURDAY: ' 3:00p - 11:00a',
+                    SUNDAY: ' 3:00p - 11:00a',
+                    MONDAY: ' 3:00p - 11:00a',
+                    TUESDAY: ' 3:00p - 11:00a',
+                    WEDNESDAY: ' 3:00p - 11:00a',
+                    THURSDAY: ' 3:00p - 11:00a',
+                    FRIDAY: ' 3:00p - 11:00a',
+                },
+            ),
+        )
+    ]
+
+    initial_moving_speed = 16.8
+    min_moving_speed = 15
+    decay_per_split_mph = 0.2
+    downtime_ratio = 5.0 / 100
+    start_date = datetime(year=2025, month=7, day=12, hour=6, minute=0)
+    split_adjustment_times = [timedelta(hours=4)]
+    sub_split_distances = [16, 15.71]
     last_split_zero_downtime = True
     with_sub_splits = True
     print_granular_breakdown(splits=[segment_one, segment_two],
@@ -298,4 +579,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main2()

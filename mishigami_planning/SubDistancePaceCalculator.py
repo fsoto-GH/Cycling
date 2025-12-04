@@ -1,63 +1,31 @@
 from datetime import datetime, timedelta
 
 # NOTE: Python dictionaries preserve order as of 3.7
-from mishigami_planning.Split import Split
-from mishigami_planning.Utils import split_into_chunks
+from Split import Split
+from Utils import compute_sub_distance_splits
 
 
-def compute_sub_splits(total_distance: float,
-                       down_time_ratio: float,
-                       moving_speed: float,
-                       start_time: datetime,
-                       start_offset: float,
-                       sub_split_distances: float = 20):
-    sub_split_distances = split_into_chunks(total_distance, sub_split_distances)
-
-    res = []
-    for sub_split_distance in sub_split_distances:
-        sub_split_moving_time = sub_split_distance / moving_speed
-        res.append({
-            "distance": sub_split_distance,
-            "span": f"{start_offset:>7.2f}, {(start_offset := start_offset + sub_split_distance):>7.2f}",
-            "moving_speed": moving_speed,
-            "adjustment_time": 0,
-            "moving_time": sub_split_moving_time,
-            "split_time": sub_split_moving_time * (1 + down_time_ratio),
-            "split_speed": moving_speed,
-            "down_time": sub_split_moving_time * down_time_ratio,
-            "total_time": sub_split_moving_time * (1 + down_time_ratio),
-            "pace": moving_speed,
-            "start_time": start_time,
-            "adjustment_start": start_time + timedelta(hours=sub_split_moving_time),
-            "end_time": (start_time := (start_time + timedelta(hours=sub_split_moving_time * (1 + down_time_ratio)))),
-            "stop": None
-        })
-
-    return res
-
-
-class PaceCalculator:
+class SubDistancePaceCalculator:
     def __init__(self):
         """
         Represents a pace calculator to be used for split distance simulations.
         """
-        self.sub_split_distances = 20
         self.start_moving_speed: float = 0
         self.min_moving_speed: float = 0
         self.segments: list[Split] = []
         self.downtime_ratio: float = 0
-        self.stops: list[dict[str: str]] = []
         self.decay_per_split: float = 0
         self.start_time: datetime = datetime.today()
         self.start_offset: float = 0
         self.no_end_downtime: bool = False
+        self.sub_split_distances = 20
 
     def set_split_info(self,
                        start_moving_speed: float,
                        min_moving_speed: float,
                        splits: list[Split],
                        downtime_ratio: float = 0,
-                       stops: list[dict[str: str]] | None = None,
+                       stops: list[],
                        decay_per_split: float = 0,
                        start_time: datetime | None = None,
                        start_offset: float = 0,
@@ -82,7 +50,6 @@ class PaceCalculator:
         self.decay_per_split = decay_per_split
         self.segments = splits
         self.downtime_ratio = downtime_ratio
-        self.stops = stops
         self.start_time = start_time or datetime.today()
         self.start_offset = start_offset
         self.no_end_downtime = no_end_downtime
@@ -118,8 +85,8 @@ class PaceCalculator:
 
             _res = {
                 "distance": segment.distance,
-                "sub_splits": compute_sub_splits(
-                    total_distance=segment.distance,
+                "sub_splits": compute_sub_distance_splits(
+                    total_distance=segment.sub_split_distance or segment.distance,  # not sure why we or this
                     down_time_ratio=_down_time_ratio,
                     moving_speed=_moving_speed,
                     start_time=start_time,
@@ -139,9 +106,6 @@ class PaceCalculator:
                 "stop": segment.rest_stop,
                 "end_time": (start_time := start_time + _split_time + _adjustment_time),
             }
-
-            if self.stops and i <= len(self.stops):
-                _res['stop'] = self.stops[i - 1]
             res.append(_res)
 
         return res
@@ -164,23 +128,7 @@ class PaceCalculator:
         return split_times
 
     def get_split_breakdown(self):
-        """
-        Prints a data table that describes the split details and extends summaries.
-        
-        :param no_end_downtime:
-        :param stops: list of stops to map each split to as a rest stop
-        :param start_offset: a distance to offset the start, end span
-
-        :param start_time: an optional start to compute expected end times
-        :param splits: the designated split distances
-        :param sleep_times: a list of float times to include in split times. This can add sleep or adjust rest time.
-        :param downtime_ratio: a ratio representing how much time will be downtime for a given moving time. For 2h of
-        moving time, a downtime ratio of .5 will generate a downtime of 0.5h so the split will be 2.5h long.
-        For example, 10hr and a downtime_ratio of 0.1 = 10hrs of moving time and 1hr of downtime (like pit stops)
-        :return: a list of each split's details and an object with the summarized data points
-        """
         split_details = self.__compute_split_details()
-
         summary = self.compute_summary(split_details)
 
         return split_details, summary
@@ -237,7 +185,7 @@ def main():
 
     start_date = datetime(year=2025, month=7, day=12, hour=8, minute=0)
 
-    pace_calculator = PaceCalculator()
+    pace_calculator = SubDistancePaceCalculator()
     pace_calculator.set_split_info(
         start_moving_speed=initial_mph,
         min_moving_speed=min_mph,
